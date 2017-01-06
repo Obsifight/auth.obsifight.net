@@ -70,8 +70,8 @@ function auth($username, $password, $adressesMac) {
             }
 
       if(empty($req->authorised_ip) || (!$req->dynamic_ip && in_array($_SERVER['REMOTE_ADDR'], $ip)) || ($req->dynamic_ip && in_array($ip_range, $ip))) { // Si ObsiGuard est désactivé ou que l'IP est autorisée et qu'elle est pas config dynamique. OU que l'ip est config comme dynamique et que la plage IP est autorisée
-        $query = Core\Queries::execute("SELECT COUNT(id) FROM mac_adresses_banned WHERE adress = '" . explode("' AND adress = '", $adressesMac) . "'", []);
-        if (!empty($query))
+        $query = Core\Queries::execute("SELECT id FROM mac_adresses_banned WHERE adress = '" . explode("' AND adress = '", $adressesMac) . "'", []);
+        if ($query && !empty($query))
           return array(false, 'mac', $query->adress);
 				// Returning true
 				return array(true, $req->user_id, null);
@@ -129,7 +129,7 @@ function send_response_agent($username, $clientToken, $agentName, $agentVersion)
 
 		// Sending a request to the database to save the access token and the client token
 		Core\Queries::execute(
-	  		'UPDATE joueurs SET access_token=:accessToken, has_connected_v5=1 WHERE user_pseudo=:username',
+	  		'UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username',
 			[
 				'accessToken' => $accessToken,
 				'username' 	  => $username,
@@ -163,7 +163,7 @@ function send_response_agent($username, $clientToken, $agentName, $agentVersion)
 	else {
 		// Sending a request to the database to save the access token
 		Core\Queries::execute(
-			'UPDATE joueurs SET access_token=:accessToken, has_connected_v5=1 WHERE user_pseudo=:username',
+			'UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username',
 			[
 				'accessToken' => $accessToken,
 				'username' 	  => $username,
@@ -213,7 +213,7 @@ function send_response($username, $clientToken){
 
 		// Sending a request to the database to save the new access and client tokens
 		Core\Queries::execute(
-			"UPDATE joueurs SET access_token=:accessToken, clientToken=:clientToken, has_connected_v5=1 WHERE user_pseudo=:username",
+			"UPDATE joueurs SET access_token=:accessToken, clientToken=:clientToken, has_connected_v6=1 WHERE user_pseudo=:username",
 			[
 				'accessToken' => $accessToken,
 				'clientToken' => $newClientToken,
@@ -238,7 +238,7 @@ function send_response($username, $clientToken){
 	else {
 		// Sending a request to the database to update the access token
 		Core\Queries::execute(
-			"UPDATE joueurs SET access_token=:accessToken, has_connected_v5=1 WHERE user_pseudo=:username",
+			"UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username",
 			[
 				'accessToken' => $accessToken,
 				'username'	  => $username
