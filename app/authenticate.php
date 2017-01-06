@@ -28,7 +28,7 @@
  * @return bool
  *            True if yes, false if not
  */
-function auth($username, $password) {
+function auth($username, $password, $adressesMac) {
 	// Sending the request to the database
 	$req = Core\Queries::execute("SELECT * FROM joueurs WHERE user_pseudo = :username", ['username' => $username]);
 
@@ -69,24 +69,27 @@ function auth($username, $password) {
                 $ip_range = implode('.', $ip_range);
             }
 
-            if(empty($req->authorised_ip) || (!$req->dynamic_ip && in_array($_SERVER['REMOTE_ADDR'], $ip)) || ($req->dynamic_ip && in_array($ip_range, $ip))) { // Si ObsiGuard est désactivé ou que l'IP est autorisée et qu'elle est pas config dynamique. OU que l'ip est config comme dynamique et que la plage IP est autorisée
+      if(empty($req->authorised_ip) || (!$req->dynamic_ip && in_array($_SERVER['REMOTE_ADDR'], $ip)) || ($req->dynamic_ip && in_array($ip_range, $ip))) { // Si ObsiGuard est désactivé ou que l'IP est autorisée et qu'elle est pas config dynamique. OU que l'ip est config comme dynamique et que la plage IP est autorisée
+        $query = Core\Queries::execute("SELECT COUNT(id) FROM mac_adresses_banned WHERE adress = '" . explode("' AND adress = '", $adressesMac) . "'", []);
+        if (!empty($query))
+          return array(false, 'mac', $query->adress);
 				// Returning true
-				return true;
+				return array(true, $req->user_id, null);
 			} else {
 
 				// On envoie l'IPN au site
-				$domain = 'http://obsifight.net';
+				/*$domain = 'http://obsifight.net';
 				//$domain = 'http://dev.obsifight.eywek.fr';
 				$url = $domain.'/obsiapi/ipn/obsiguard/'.$req->user_pseudo.'/'.$_SERVER['REMOTE_ADDR'];
-				@file_get_contents($url, false, stream_context_create(array('http'=>array('timeout' => 2)))); // 2 secondes MAX
+				@file_get_contents($url, false, stream_context_create(array('http'=>array('timeout' => 2)))); // 2 secondes MAX*/
 
-				return 'ip';
+				return array(false, 'ip', null);
 			}
 
 		// Else if the password aren't the same
 		} else {
 			// Returning false
-			return false;
+			return array(false, false, null);
 		}
 
 	}
@@ -272,10 +275,12 @@ if($request['method'] == "POST") {
 		$password = isset($getContents['password']) ? $getContents['password'] : null;
 		$clientToken = isset($getContents['clientToken']) ? $getContents['clientToken'] : null;
 		$agent = isset($getContents['agent']) ? $getContents['agent'] : null;
+    $adressesMac = isset($getContents['mac_adresses']) ? $getContents['mac_adresses'] : array();
 
 		// If the authentication worked
-		$try = auth($username, $password);
+		list($try, $other, $customMessage) = auth($username, $password, $adressesMac);
 		if($try === true) {
+      $user_id = $other;
 
 			// log into log database
 	        Core\Queries::execute(
@@ -287,6 +292,17 @@ if($request['method'] == "POST") {
 				]
 			, 'log');
 
+      // log mac
+      foreach ($adressesMac as $adress) {
+        Core\Queries::execute(
+        "INSERT INTO mac_adresses(adress, user_id, login_date) VALUES(:adress, :user_id, :login_date)",
+        [
+          'adress' => $adress,
+          'user_id' => $user_id,
+          'login_date' => date('Y-m-d H:i:s')
+        ]);
+      }
+
 			// If the agent field isn't null
 			if(!is_null($agent))
 				// Sending a response with the agent
@@ -296,9 +312,12 @@ if($request['method'] == "POST") {
 			else
 				// Sending a response without the agent
 				send_response($username, $clientToken);
-		} elseif($try == 'ip') {
+		} elseif($try === false && $other === 'ip') {
 			// Else returning the third-half error (see functions.php)
 			echo error(3.5);
+    } elseif($try === false && $other === 'mac') {
+      // Else returning see functions.php
+      echo error(3.8, $customMessage);
 		} else {
 			// Else returning the third error (see functions.php)
 			echo error(3);

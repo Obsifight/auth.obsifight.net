@@ -43,7 +43,7 @@ function preint_r($var){
  * @param $errortype
  *            The error type to get
  */
-function error($errortype) {
+function error($errortype, $errorMessage = null) {
 	// Switching between the error types
 	switch($errortype) {
 		// First error, method not allowed (Malformed request)
@@ -70,6 +70,11 @@ function error($errortype) {
 			$errorMessage = "IP invalide ! Veuillez ajouter votre IP sur ObsiGuard (site) ou désactivez-le (fortement déconseillé).";
 			break;
 
+    // forbidden operation error (Mac banned)
+    case 3.8:
+      $error = "InvalidMAC";
+      break;
+
 		// Fourth error, forbidden operation error (Invalid token given)
 		case 4:
 			$error = "ForbiddenOperationException";
@@ -87,12 +92,12 @@ function error($errortype) {
 			$error = "Unsupported Media Type";
 			$errorMessage = "The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method";
 			break;
-			
+
 		case 7:
 			$error = "Invalid serverID";
 			$errorMessage = "Invalid serverID.";
 			break;
-			
+
 		case 8:
 			$error = "User not found";
 			$errorMessage = "User not authorized to connect.";
