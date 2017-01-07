@@ -70,7 +70,11 @@ function auth($username, $password, $adressesMac) {
             }
 
       if(empty($req->authorised_ip) || (!$req->dynamic_ip && in_array($_SERVER['REMOTE_ADDR'], $ip)) || ($req->dynamic_ip && in_array($ip_range, $ip))) { // Si ObsiGuard est désactivé ou que l'IP est autorisée et qu'elle est pas config dynamique. OU que l'ip est config comme dynamique et que la plage IP est autorisée
-        $query = Core\Queries::execute("SELECT reason FROM mac_adresses_banned WHERE adress = '" . implode("' OR adress = '", ($adressesMac)) . "'", []);
+        $values = array();
+        foreach ($adressesMac as $mac) {
+          $values[] = "adress = ?";
+        }
+        $query = Core\Queries::execute("SELECT reason FROM mac_adresses_banned WHERE ".implode(' OR ', $values), $adressesMac);
         if ($query && !empty($query))
           return array(false, 'mac', $query->reason);
 				// Returning true
