@@ -288,7 +288,7 @@ if($request['method'] == "POST") {
 
 			// log into log database
 	        Core\Queries::execute(
-				"INSERT INTO loginlogs(username, ip, type) VALUES(:username, :ip, :mac_adress, :type)",
+				"INSERT INTO loginlogs(username, ip, mac_adress, type) VALUES(:username, :ip, :mac_adress, :type)",
 				[
 					'username' => $username,
 					'ip'	  => $_SERVER['REMOTE_ADDR'],
