@@ -292,20 +292,10 @@ if($request['method'] == "POST") {
 				[
 					'username' => $username,
 					'ip'	  => $_SERVER['REMOTE_ADDR'],
+          'mac_adress' => json_encode($adressesMac),
 					'type'    => 'launcher'
 				]
 			, 'log');
-
-      // log mac
-      foreach ($adressesMac as $adress) {
-        Core\Queries::execute(
-        "INSERT INTO mac_adresses(adress, user_id, login_date) VALUES(:adress, :user_id, :login_date)",
-        [
-          'adress' => $adress,
-          'user_id' => $user_id,
-          'login_date' => date('Y-m-d H:i:s')
-        ]);
-      }
 
 			// If the agent field isn't null
 			if(!is_null($agent))
