@@ -133,7 +133,7 @@ function send_response_agent($username, $clientToken, $agentName, $agentVersion)
 
 		// Sending a request to the database to save the access token and the client token
 		Core\Queries::execute(
-	  		'UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username',
+	  		'UPDATE joueurs SET access_token=:accessToken, has_connected_v7=1 WHERE user_pseudo=:username',
 			[
 				'accessToken' => $accessToken,
 				'username' 	  => $username,
@@ -167,7 +167,7 @@ function send_response_agent($username, $clientToken, $agentName, $agentVersion)
 	else {
 		// Sending a request to the database to save the access token
 		Core\Queries::execute(
-			'UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username',
+			'UPDATE joueurs SET access_token=:accessToken, has_connected_v7=1 WHERE user_pseudo=:username',
 			[
 				'accessToken' => $accessToken,
 				'username' 	  => $username,
@@ -217,7 +217,7 @@ function send_response($username, $clientToken){
 
 		// Sending a request to the database to save the new access and client tokens
 		Core\Queries::execute(
-			"UPDATE joueurs SET access_token=:accessToken, clientToken=:clientToken, has_connected_v6=1 WHERE user_pseudo=:username",
+			"UPDATE joueurs SET access_token=:accessToken, clientToken=:clientToken, has_connected_v7=1 WHERE user_pseudo=:username",
 			[
 				'accessToken' => $accessToken,
 				'clientToken' => $newClientToken,
@@ -242,7 +242,7 @@ function send_response($username, $clientToken){
 	else {
 		// Sending a request to the database to update the access token
 		Core\Queries::execute(
-			"UPDATE joueurs SET access_token=:accessToken, has_connected_v6=1 WHERE user_pseudo=:username",
+			"UPDATE joueurs SET access_token=:accessToken, has_connected_v7=1 WHERE user_pseudo=:username",
 			[
 				'accessToken' => $accessToken,
 				'username'	  => $username
