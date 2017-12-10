@@ -1,1 +1,6 @@
-phpmyadmin
+composer.phar
+old-auth
+maintenance
+adminmysql
+vendor
+README.md
