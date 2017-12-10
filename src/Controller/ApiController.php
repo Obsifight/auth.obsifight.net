@@ -25,50 +25,7 @@ use Slim\Http\Response;
 class ApiController extends Controller
 {
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @return Response
-     */
-    public function register(Request $request, Response $response)
-    {
-        onlyJsonRequest($request, $response);
-        $params = $request->getParams();
-
-        $username = isset($params['username']) ? $params['username'] : null;
-        $password = isset($params['password']) ? $params['password'] : null;
-        $vpassword = isset($params['verification_password']) ? $params['verification_password'] : null;
-        $email = isset($params['email']) ? $params['email'] : null;
-        $key = isset($params['key']) ? $params['key'] : null;
-
-        if($key != $this->ci->get('settings')['private_key'])
-            return $response->withStatus(500)->withJson(['error' => 'Wrong Key', 'errorMessage' => 'the private key is not defined or wrong']);
-
-        if (!$username || !$password || !$vpassword || !$email)
-            return $response->withStatus(500)->withJson(['error' => 'InvalidArgument', 'errorMessage' => 'username, password, verification_password or email have to be defined']);
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL))
-            return $response->withStatus(500)->withJson(['error' => 'Invalid Email', 'errorMessage' => 'The email field is not a valid email']);
-
-        if (!User::where("username", $username)->orWhere("email", $email)->get()->isEmpty())
-            return $response->withStatus(500)->withJson(['error' => 'Already Exists', 'errorMessage' => 'An account with this username or email already exists']);
-
-        if ($password != $vpassword)
-            return $response->withStatus(500)->withJson(['error' => 'Password Match', 'errorMessage' => 'The passwords does not match']);
-
-        $user = new User();
-        $user->username = $username;
-        $user->password = bcrypt($password);
-        $user->UUID = generateUUID();
-        $user->email = $email;
-        $user->save();
-
-        return $response->withJson([
-            "username" => $user->username,
-            "UUID" => $user->UUID,
-            "email" => $user->email
-        ]);
-    }
+    private $salt = 'PApVSuS8hDUEsOEP0fWZESmODaHkXVst27CTnYMM';
 
     /**
      * @param Request $request
@@ -80,21 +37,18 @@ class ApiController extends Controller
         onlyJsonRequest($request, $response);
         $params = $request->getParams();
 
-        $email = isset($params['username']) ? $params['username'] : null;
+        $username = isset($params['username']) ? $params['username'] : null;
         $password = isset($params['password']) ? $params['password'] : null;
+        $password = sha1($username . $this->salt . $password);
         $clientToken = isset($params['clientToken']) ? $params['clientToken'] : null;
-        //$agent = isset($params['agent']) ? $params['agent'] : null;
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL))
-            return $response->withStatus(500)->withJson(['error' => 'Invalid Username', 'errorMessage' => 'The username field have to be an email']);
-
-        $user = User::where("email", $email)->first();
-
+        $user = User::where("username", $username)->where('password', $password)->first();
         if (!$user)
             return error(2, $response);
 
-        if (!password_verify($password, $user->password))
-            return error(2, $response);
+        // TODO: Check if user's mac is banned
+
+        // TODO: Log authenticate
 
         $accessToken = md5(uniqid(rand(), true));
         if (is_null($clientToken))
@@ -132,8 +86,6 @@ class ApiController extends Controller
         $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
 
         $user = User::where("accessToken", $accessToken)->first();
-
-
         if (!$user)
             return error(3, $response);
 
@@ -207,7 +159,7 @@ class ApiController extends Controller
         $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
         $clientToken = !empty($params['clientToken']) ? $params['clientToken'] : null;
 
-        if($accessToken || $clientToken)
+        if(empty($accessToken) || empty($clientToken))
             return error(3, $response);
 
         $user = User::where("accessToken", $accessToken)->first();
@@ -220,6 +172,65 @@ class ApiController extends Controller
 
         $user->accessToken = null;
         $user->save();
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return array|Response|string
+     */
+    public function join(Request $request, Response $response){
+        onlyJsonRequest($request, $response);
+        $params = $request->getParams();
+
+        $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
+        $uuid = !empty($params['selectedProfile']) ? $params['selectedProfile'] : null;
+        $serverId = !empty($params['serverId']) ? $params['serverId'] : null;
+
+        if(empty($accessToken) || empty($uuid) || empty($serverId))
+            return error(3, $response);
+
+        $user = User::where("accessToken", $accessToken)->first();
+
+        if(!$user)
+            return error(3, $response);
+
+        // TODO: Save into cache and delete older
+
+        return $response->withJson([
+            'error' => null,
+            'errorMessage' => null,
+            'cause' => null
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return array|Response|string
+     */
+    public function hasJoined(Request $request, Response $response){
+        onlyJsonRequest($request, $response);
+        $params = $request->getParams();
+
+        $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
+        $serverId = !empty($params['serverId']) ? $params['serverId'] : null;
+
+        if(empty($accessToken) || empty($serverId))
+            return error(3, $response);
+
+        // TODO: Check if in cache, delete it (throw an error if not found)
+
+        return $response->withJson([
+     //       'id' => $uuid, // TODO: Get UUID
+            'properties' => [
+                [
+                    'name' => "textures",
+                    'value' => "",
+                    'signature' => ""
+                ]
+            ]
+        ])
     }
 
 }

@@ -21,6 +21,6 @@ namespace App\Model;
 class User extends Model
 {
 
-    protected $table = "openauth_users";
+    protected $table = "users";
 
 }

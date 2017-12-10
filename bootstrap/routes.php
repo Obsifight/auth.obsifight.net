@@ -33,8 +33,6 @@ $app->post('/install', InstallController::class . ":install_post")
     ->setName("install_post");
 
 // API
-$app->post('/api/register', ApiController::class . ':register')
-    ->setName("api.register");
 $app->post('/api/authenticate', ApiController::class . ':authenticate')
     ->setName("api.authenticate");
 $app->post('/api/refresh', ApiController::class . ':refresh')
@@ -45,3 +43,7 @@ $app->post('/api/signout', ApiController::class . ':signout')
     ->setName("api.signout");
 $app->post('/api/invalidate', ApiController::class . ':invalidate')
     ->setName("api.invalidate");
+$app->post('/api/join', ApiController::class . ':join')
+    ->setName("api.join");
+$app->post('/api/has-joined', ApiController::class . ':hasJoined')
+    ->setName("api.hasJoined");
