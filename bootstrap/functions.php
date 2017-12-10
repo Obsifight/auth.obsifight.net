@@ -39,7 +39,7 @@ function error($error, Response $response)
         ],
         [
             "error" => "ForbiddenOperationException",
-            "errorMessage" => "Invalid credentials. Invalid username or password."
+            "errorMessage" => "Identifiants invalides."
         ],
         [
             "error" => "ForbiddenOperationException",
@@ -113,7 +113,8 @@ function generateUUID()
  */
 function isJsonRequest(Request $request)
 {
-    return (current($request->getHeader("Content-Type")) == "application/json");
+    return true;
+    //return (current($request->getHeader("Content-Type")) == "application/json");
 }
 
 /**
@@ -124,7 +125,11 @@ function isJsonRequest(Request $request)
 function onlyJsonRequest(Request $request, Response $response)
 {
     if (!isJsonRequest($request))
-        return \error(4, $response);
+    {
+        \error(4, $response);
+        return false;
+    }
+    return true;
 }
 
 function root_path($path=''){

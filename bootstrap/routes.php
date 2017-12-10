@@ -33,17 +33,19 @@ $app->post('/install', InstallController::class . ":install_post")
     ->setName("install_post");
 
 // API
-$app->post('/api/authenticate', ApiController::class . ':authenticate')
+$app->post('/authenticate', ApiController::class . ':authenticate')
     ->setName("api.authenticate");
-$app->post('/api/refresh', ApiController::class . ':refresh')
+$app->post('/refresh', ApiController::class . ':refresh')
     ->setName("api.refresh");
-$app->post('/api/validate', ApiController::class . ':validate')
+$app->post('/validate', ApiController::class . ':validate')
     ->setName("api.validate");
-$app->post('/api/signout', ApiController::class . ':signout')
+$app->post('/signout', ApiController::class . ':signout')
     ->setName("api.signout");
-$app->post('/api/invalidate', ApiController::class . ':invalidate')
+$app->post('/invalidate', ApiController::class . ':invalidate')
     ->setName("api.invalidate");
-$app->post('/api/join', ApiController::class . ':join')
+$app->post('/join', ApiController::class . ':join')
     ->setName("api.join");
-$app->post('/api/has-joined', ApiController::class . ':hasJoined')
+$app->get('/hasJoined', ApiController::class . ':hasJoined')
     ->setName("api.hasJoined");
+$app->get('/profile/{uuid}', ApiController::class . ':profile')
+    ->setName("api.profile");

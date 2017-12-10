@@ -31,7 +31,7 @@ class AppController extends Controller
         $data = array(
             'Status' => 'OK',
             'Runtime-Mode' => 'productionMode',
-            'Application-Author' => 'Litarvan & Vavaballz',
+            'Application-Author' => 'Litarvan & Vavaballz & Eywek',
             'Application-Description' => 'OpenAuth Server.',
             'Specification-Version' => '2.0.0-SNAPSHOT',
             'Application-Name' => 'openauth.server',

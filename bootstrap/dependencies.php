@@ -56,6 +56,7 @@ $container['notFoundHandler'] = function ($c) {
 if (isset($container->get('settings')['db'])) {
     //Eloquent
     $capsule = new Illuminate\Database\Capsule\Manager;
-    $capsule->addConnection($container->get('settings')['db']);
+    foreach ($container->get('settings')['db'] as $name => $infos)
+        $capsule->addConnection($infos, $name);
     $capsule->bootEloquent();
 }

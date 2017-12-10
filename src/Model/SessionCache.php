@@ -16,20 +16,12 @@
 * You should have received a copy of the GNU Lesser General Public License
 * along with OpenAuth-Server V2.  If not, see <http://www.gnu.org/licenses/>.
 */
+namespace App\Model;
 
-return [
-    'settings' => [
-        'db' => [
-            'driver' => 'mysql',
-            'host' => 'localhost',
-            'database' => 'dbname',
-            'username' => 'name',
-            'password' => 'pass',
-            'charset' => 'utf8',
-            'collation' => 'utf8_unicode_ci',
-            'prefix' => '',
-        ],
-        'owner' => 'ownername',
-        'private_key' => 'prikey'
-    ],
-];
+class SessionCache extends Model
+{
+
+    protected $connection = 'auth-server';
+    protected $table = "session_cache";
+    public $timestamps = false;
+}

@@ -18,7 +18,9 @@
 */
 namespace App\Controller;
 
+use App\Model\SessionCache;
 use App\Model\User;
+use App\Model\UsersConnectionLog;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
@@ -34,7 +36,8 @@ class ApiController extends Controller
      */
     public function authenticate(Request $request, Response $response)
     {
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $username = isset($params['username']) ? $params['username'] : null;
@@ -46,15 +49,21 @@ class ApiController extends Controller
         if (!$user)
             return error(2, $response);
 
+        // TODO: Check ObsiGuard
+
         // TODO: Check if user's mac is banned
 
-        // TODO: Log authenticate
+        $log = new UsersConnectionLog();
+        $log->user_id = $user->id;
+        $log->type = 'LAUNCHER';
+        $log->ip = $_SERVER['REMOTE_ADDR'];
+        $log->save();
 
         $accessToken = md5(uniqid(rand(), true));
         if (is_null($clientToken))
             $clientToken = md5(uniqid(rand(), true));
-        $user->accessToken = $accessToken;
-        $user->clientToken = $clientToken;
+        $user->access_token = $accessToken;
+        $user->client_token = $clientToken;
         $user->save();
 
         return $response->withJson([
@@ -79,7 +88,8 @@ class ApiController extends Controller
      */
     public function refresh(Request $request, Response $response)
     {
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $clientToken = !empty($params['clientToken']) ? $params['clientToken'] : null;
@@ -106,7 +116,8 @@ class ApiController extends Controller
      * @param Response $response
      */
     public function validate(Request $request, Response $response){
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
@@ -114,7 +125,7 @@ class ApiController extends Controller
         if(is_null($accessToken))
             return error(3, $response);
 
-        if(!User::where("accessToken", $accessToken)->first())
+        if(!User::where("access_token", $accessToken)->first())
             return error(3, $response);
     }
 
@@ -123,7 +134,8 @@ class ApiController extends Controller
      * @param Response $response
      */
     public function signout(Request $request, Response $response){
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $username = !empty($params['username']) ? $params['username'] : null;
@@ -135,7 +147,7 @@ class ApiController extends Controller
         if (!filter_var($username, FILTER_VALIDATE_EMAIL))
             return $response->withStatus(500)->withJson(['error' => 'Invalid Email', 'errorMessage' => 'The email field is not a valid email']);
 
-        $user = User::where("email", $username)->first();
+        $user = User::where("username", $username)->first();
 
         if (!$user)
             return error(2, $response);
@@ -143,7 +155,7 @@ class ApiController extends Controller
         if (!password_verify($password, $user->password))
             return error(2, $response);
 
-        $user->accessToken = null;
+        $user->access_token = null;
         $user->save();
     }
 
@@ -153,7 +165,8 @@ class ApiController extends Controller
      * @return array|Response|string
      */
     public function invalidate(Request $request, Response $response){
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
@@ -162,15 +175,15 @@ class ApiController extends Controller
         if(empty($accessToken) || empty($clientToken))
             return error(3, $response);
 
-        $user = User::where("accessToken", $accessToken)->first();
+        $user = User::where("access_token", $accessToken)->first();
 
         if(!$user)
             return error(3, $response);
 
-        if ($clientToken != $user->clientToken)
+        if ($clientToken != $user->client_token)
             return error(3, $response);
 
-        $user->accessToken = null;
+        $user->access_token = null;
         $user->save();
     }
 
@@ -180,7 +193,8 @@ class ApiController extends Controller
      * @return array|Response|string
      */
     public function join(Request $request, Response $response){
-        onlyJsonRequest($request, $response);
+        if (!onlyJsonRequest($request, $response))
+            return null;
         $params = $request->getParams();
 
         $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
@@ -190,12 +204,16 @@ class ApiController extends Controller
         if(empty($accessToken) || empty($uuid) || empty($serverId))
             return error(3, $response);
 
-        $user = User::where("accessToken", $accessToken)->first();
-
+        $user = User::where("access_token", $accessToken)->first();
         if(!$user)
             return error(3, $response);
 
-        // TODO: Save into cache and delete older
+        SessionCache::where('uuid', $uuid)->delete();
+        $cache = new SessionCache();
+        $cache->username = $user->username;
+        $cache->uuid = $uuid;
+        $cache->server_id = $serverId;
+        $cache->save();
 
         return $response->withJson([
             'error' => null,
@@ -210,19 +228,22 @@ class ApiController extends Controller
      * @return array|Response|string
      */
     public function hasJoined(Request $request, Response $response){
-        onlyJsonRequest($request, $response);
-        $params = $request->getParams();
+        $params = $request->getQueryParams();
 
-        $accessToken = !empty($params['accessToken']) ? $params['accessToken'] : null;
+        $username = !empty($params['username']) ? $params['username'] : null;
         $serverId = !empty($params['serverId']) ? $params['serverId'] : null;
 
-        if(empty($accessToken) || empty($serverId))
+        if(empty($username) || empty($serverId))
             return error(3, $response);
 
-        // TODO: Check if in cache, delete it (throw an error if not found)
+        $cache = SessionCache::where('username', $username)->orderBy('id', 'desc')->first();
+        if (!$cache)
+            return error(7, $response);
+        $uuid = $cache->uuid;
+        SessionCache::where('username', $username)->delete();
 
         return $response->withJson([
-     //       'id' => $uuid, // TODO: Get UUID
+            'id' => $uuid,
             'properties' => [
                 [
                     'name' => "textures",
@@ -230,7 +251,44 @@ class ApiController extends Controller
                     'signature' => ""
                 ]
             ]
-        ])
+        ]);
     }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return array|Response|string
+     */
+    public function profile(Request $request, Response $response, $args){
+        $params = $request->getQueryParams();
+
+        if(!isset($args['uuid']))
+            return error(3, $response);
+
+        $uuid = $args['uuid'];
+        $user = User::where('uuid', $uuid)->orderBy('id', 'desc')->first();
+        if (!$user)
+            return error(3, $response);
+
+        return $response->withJson([
+            'id' => $uuid,
+            'name' => $user->username,
+            'properties' => array(
+                'name' => 'textures',
+                'value' => base64_encode(json_encode([
+                    'timestamp' => time() * 1000,
+                    'profileId' => $uuid,
+                    'profileName' => $user->username,
+                    'isPublic' => true,
+                    'textures' => [
+                        'skin' => 'http://51.255.48.29/skins/' . $user->username . '.png',
+                        'cape' => 'http://51.255.48.29/capes/' . $user->username . '_cape.png'
+                    ]
+                ]))
+            )
+        ]);
+    }
+
+    // TODO: Addresse MAC
 
 }

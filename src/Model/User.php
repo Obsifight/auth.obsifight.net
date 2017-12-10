@@ -20,7 +20,6 @@ namespace App\Model;
 
 class User extends Model
 {
-
+    protected $connection = 'web';
     protected $table = "users";
-
 }
