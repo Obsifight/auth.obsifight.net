@@ -21,6 +21,7 @@ namespace App\Controller;
 use App\Model\SessionCache;
 use App\Model\User;
 use App\Model\UsersConnectionLog;
+use App\Model\UsersVersion;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
@@ -58,6 +59,14 @@ class ApiController extends Controller
         $log->type = 'LAUNCHER';
         $log->ip = $_SERVER['REMOTE_ADDR'];
         $log->save();
+
+        if (empty(UsersVersion::where('user_id', $user->id)->where('version', 8)->first()))
+        {
+            $version = new UsersVersion();
+            $version->user_id = $user->id;
+            $version->version = 8;
+            $version->save();
+        }
 
         $accessToken = md5(uniqid(rand(), true));
         if (is_null($clientToken))
@@ -281,14 +290,11 @@ class ApiController extends Controller
                     'profileName' => $user->username,
                     'isPublic' => true,
                     'textures' => [
-                        'SKIN' => 'http://51.255.48.29/skins/' . $user->username . '.png',
-                        'CAPE' => 'http://51.255.48.29/capes/' . $user->username . '_cape.png'
+                        'skin' => 'http://skins.obsifight.net/skins/' . $user->username . '.png',
+                        'cape' => 'http://skins.obsifight.net/capes/' . $user->username . '_cape.png'
                     ]
                 ]))
             )
         ]);
     }
-
-    // TODO: Addresse MAC
-
 }
