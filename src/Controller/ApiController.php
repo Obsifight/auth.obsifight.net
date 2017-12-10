@@ -281,8 +281,8 @@ class ApiController extends Controller
                     'profileName' => $user->username,
                     'isPublic' => true,
                     'textures' => [
-                        'skin' => 'http://51.255.48.29/skins/' . $user->username . '.png',
-                        'cape' => 'http://51.255.48.29/capes/' . $user->username . '_cape.png'
+                        'SKIN' => 'http://51.255.48.29/skins/' . $user->username . '.png',
+                        'CAPE' => 'http://51.255.48.29/capes/' . $user->username . '_cape.png'
                     ]
                 ]))
             )
