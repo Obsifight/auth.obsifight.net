@@ -18,6 +18,8 @@
 */
 namespace App\Controller;
 
+use App\Model\MacAddress;
+use App\Model\MacAddressBanned;
 use App\Model\SessionCache;
 use App\Model\User;
 use App\Model\UsersConnectionLog;
@@ -46,12 +48,19 @@ class ApiController extends Controller
         $password = isset($params['password']) ? $params['password'] : null;
         $password = sha1($username . $this->salt . $password);
         $clientToken = isset($params['clientToken']) ? $params['clientToken'] : null;
+        $macAddresses = isset($params['mac_adresses']) ? $params['mac_adresses'] : [];
 
+        // Check if mac is banned
+        if (!empty(($ban = MacAddressBanned::whereIn('address', $macAddresses)->first())))
+            return error(7, $response, $ban->reason);
+
+        // Find user
         $user = User::where("username", $username)->where('password', $password)->first();
         if (!$user)
             return error(2, $response);
 
-        $obsiguardIPList = UsersObsiguardIp::where('user_id', $user->id)->find(); // TODO: Test
+        // Check ObsiGuard
+        $obsiguardIPList = UsersObsiguardIp::where('user_id', $user->id)->find();
         if (!empty($obsiguardIPList))
         {
             $ipList = [];
@@ -63,14 +72,21 @@ class ApiController extends Controller
                 return error(6, $response);
         }
 
-        // TODO: Check if user's mac is banned
+        // Log mac
+        foreach ($macAddresses as $address) {
+            MacAddress::updateOrCreate(
+                ['address' => $address, 'user_id' => $user->id], ['updated_at' => date('Y-m-d H:i:s')]
+            );
+        }
 
+        // Log
         $log = new UsersConnectionLog();
         $log->user_id = $user->id;
         $log->type = 'LAUNCHER';
         $log->ip = $_SERVER['REMOTE_ADDR'];
         $log->save();
 
+        // Add to version
         if (empty(UsersVersion::where('user_id', $user->id)->where('version', 8)->first()))
         {
             $version = new UsersVersion();
@@ -79,6 +95,7 @@ class ApiController extends Controller
             $version->save();
         }
 
+        // Generate tokens
         $accessToken = md5(uniqid(rand(), true));
         if (is_null($clientToken))
             $clientToken = md5(uniqid(rand(), true));
@@ -278,6 +295,4 @@ class ApiController extends Controller
             )
         ]);
     }
-
-    // TODO: Add MAC address
 }

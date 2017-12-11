@@ -26,7 +26,7 @@ use Slim\Http\Response;
  * @param \Slim\Http\Response $response
  * @return array|string
  */
-function error($error, Response $response)
+function error($error, Response $response, $reason = '')
 {
     $errors = [
         [
@@ -56,6 +56,10 @@ function error($error, Response $response)
         [
             "error" => "ForbiddenOperationException",
             "errorMessage" => "Cette IP n'est pas autorisé par ObsiGuard."
+        ],
+        [
+            "error" => "ForbiddenOperationException",
+            "errorMessage" => "Vous êtes bannis: $reason."
         ]
     ];
 
