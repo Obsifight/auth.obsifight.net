@@ -21,6 +21,7 @@ namespace App\Controller;
 use App\Model\SessionCache;
 use App\Model\User;
 use App\Model\UsersConnectionLog;
+use App\Model\UsersObsiguardIp;
 use App\Model\UsersVersion;
 use Slim\Http\Request;
 use Slim\Http\Response;
@@ -50,7 +51,17 @@ class ApiController extends Controller
         if (!$user)
             return error(2, $response);
 
-        // TODO: Check ObsiGuard
+        $obsiguardIPList = UsersObsiguardIp::where('user_id', $user->id)->find(); // TODO: Test
+        if (!empty($obsiguardIPList))
+        {
+            $ipList = [];
+            $ip = $_SERVER['REMOTE_ADDR'];
+            $ip = ($user->obsiguard_dynamic) ? cutIPForDynamic($ip) : $ip;
+            foreach ($obsiguardIPList as $ip)
+                array_push($ipList, ($user->obsiguard_dynamic) ? cutIPForDynamic($ip->ip) : $ip->ip);
+            if (!in_array($ip, $ipList))
+                return error(6, $response);
+        }
 
         // TODO: Check if user's mac is banned
 
@@ -136,36 +147,6 @@ class ApiController extends Controller
 
         if(!User::where("access_token", $accessToken)->first())
             return error(3, $response);
-    }
-
-    /**
-     * @param Request $request
-     * @param Response $response
-     */
-    public function signout(Request $request, Response $response){
-        if (!onlyJsonRequest($request, $response))
-            return null;
-        $params = $request->getParams();
-
-        $username = !empty($params['username']) ? $params['username'] : null;
-        $password = !empty($params['password']) ? $params['password'] : null;
-
-        if(!$username || !$password)
-            return error(2, $response);
-
-        if (!filter_var($username, FILTER_VALIDATE_EMAIL))
-            return $response->withStatus(500)->withJson(['error' => 'Invalid Email', 'errorMessage' => 'The email field is not a valid email']);
-
-        $user = User::where("username", $username)->first();
-
-        if (!$user)
-            return error(2, $response);
-
-        if (!password_verify($password, $user->password))
-            return error(2, $response);
-
-        $user->access_token = null;
-        $user->save();
     }
 
     /**
@@ -297,4 +278,6 @@ class ApiController extends Controller
             )
         ]);
     }
+
+    // TODO: Add MAC address
 }

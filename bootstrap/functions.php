@@ -52,6 +52,10 @@ function error($error, Response $response)
         [
             "error" => "Unsupported Media Type",
             "errorMessage" => "The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method"
+        ],
+        [
+            "error" => "ForbiddenOperationException",
+            "errorMessage" => "Cette IP n'est pas autorisé par ObsiGuard."
         ]
     ];
 
@@ -134,4 +138,9 @@ function onlyJsonRequest(Request $request, Response $response)
 
 function root_path($path=''){
     return ROOT_PATH . DIRECTORY_SEPARATOR . $path;
+}
+
+function cutIPForDynamic($ip)
+{
+    return (substr($ip, 0, -(strlen($ip) - strrpos($ip, '.'))));
 }
