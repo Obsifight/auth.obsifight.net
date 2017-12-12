@@ -60,15 +60,15 @@ class ApiController extends Controller
             return error(2, $response);
 
         // Check ObsiGuard
-        $obsiguardIPList = UsersObsiguardIp::where('user_id', $user->id)->find();
-        if (!empty($obsiguardIPList))
+        $obsiguardIPList = UsersObsiguardIp::where('user_id', $user->id)->get();
+        if ($obsiguardIPList->count() > 0)
         {
             $ipList = [];
-            $ip = $_SERVER['REMOTE_ADDR'];
-            $ip = ($user->obsiguard_dynamic) ? cutIPForDynamic($ip) : $ip;
+            $currentIP = $_SERVER['REMOTE_ADDR'];
+            $currentIP = ($user->obsiguard_dynamic) ? cutIPForDynamic($currentIP) : $currentIP;
             foreach ($obsiguardIPList as $ip)
                 array_push($ipList, ($user->obsiguard_dynamic) ? cutIPForDynamic($ip->ip) : $ip->ip);
-            if (!in_array($ip, $ipList))
+            if (!in_array($currentIP, $ipList))
                 return error(6, $response);
         }
 
