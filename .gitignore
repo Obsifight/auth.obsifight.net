@@ -1,6 +1,4 @@
-composer.phar
-old-auth
-maintenance
 adminmysql
+composer.phar
 vendor
-README.md
+maintenance

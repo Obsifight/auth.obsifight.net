@@ -288,8 +288,8 @@ class ApiController extends Controller
                     'profileName' => $user->username,
                     'isPublic' => true,
                     'textures' => [
-                        'skin' => 'http://skins.obsifight.net/skins/' . $user->username . '.png',
-                        'cape' => 'http://skins.obsifight.net/capes/' . $user->username . '_cape.png'
+                        'SKIN' => 'http://skins.obsifight.net/skins/' . $user->username . '.png',
+                        'CAPE' => 'http://skins.obsifight.net/capes/' . $user->username . '_cape.png'
                     ]
                 ]))
             )

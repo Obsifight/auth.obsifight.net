@@ -22,4 +22,5 @@ class MacAddress extends Model
 {
     protected $connection = 'auth-server';
     protected $table = "mac_addresses";
+    protected $fillable = ['updated_at', 'user_id', 'address'];
 }

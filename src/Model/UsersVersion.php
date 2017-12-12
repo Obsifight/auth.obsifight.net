@@ -6,6 +6,7 @@ class UsersVersion extends Model
 {
     protected $connection = 'web';
     protected $fillable = ['user_id', 'version'];
+    public $timestamps = false;
 
     public function user()
     {
